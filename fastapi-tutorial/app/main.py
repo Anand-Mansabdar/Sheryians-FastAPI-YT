@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Path
 from service.products import get_all_products, load_products
+from pydantic import BaseModel, Field
+from typing import Annotated
 
 app = FastAPI()
 
@@ -57,3 +59,24 @@ def get_product_by_id(
             return product
 
     raise HTTPException(status_code=404, detail="Product not found")
+
+
+# Creating class for "POST" to add new product in products
+class Product(BaseModel):
+    id: str
+    sku: Annotated[
+        str,
+        Field(
+            min_length=6,
+            max_length=30,
+            title="SKU",
+            description="Stock Keeping Unit",
+            examples=["1234-abc-567-8d"],
+        ),
+    ]  # Annotation of the field "sku". Tells that field sku must pass through all the above validations
+    name: str = "New Product"  # Setting a default value to a product
+
+
+@app.post("/products", status_code=201)
+def create_products(product: Product):
+    return product
