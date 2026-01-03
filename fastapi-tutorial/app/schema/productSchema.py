@@ -8,7 +8,7 @@ from pydantic import (
     EmailStr,
 )
 from typing import Annotated, Literal, Optional, List, Dict
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 
 
@@ -21,7 +21,7 @@ class Dimensions(BaseModel):
 
 # Creating a class for seller_details
 class Seller(BaseModel):
-    id: UUID  # Generates a default unique UUID
+    id: UUID # Generates a default unique UUID
     name: Annotated[
         str,
         Field(
