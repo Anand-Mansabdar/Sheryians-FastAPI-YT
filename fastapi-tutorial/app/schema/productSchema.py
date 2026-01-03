@@ -1,7 +1,41 @@
-from pydantic import BaseModel, Field, AnyUrl
+from pydantic import (
+    BaseModel,
+    Field,
+    AnyUrl,
+    field_validator,
+    model_validator,
+    computed_field,
+    EmailStr,
+)
 from typing import Annotated, Literal, Optional, List, Dict
 from uuid import UUID
 from datetime import datetime
+
+
+# Creating a class for seller_details
+class Seller(BaseModel):
+    id: UUID  # Generates a default unique UUID
+    name: Annotated[
+        str,
+        Field(
+            min_length=2,
+            max_length=60,
+            title="Seller Name",
+            description="Name of the seller",
+            examples=["Mi Store", "Official Realme"],
+        ),
+    ]
+    email: EmailStr
+    website: AnyUrl
+
+    @field_validator("email", mode="after")
+    @classmethod
+    def validate_seller_email_domain(cls, value: EmailStr):
+        allowed_domains = ["mistore.in", "hpworld.in", "apple.in"]
+        domain = str(value).split("@")[-1].lower()
+        if domain not in allowed_domains:
+            raise ValueError(f"Seller email domain not allowed: {domain}")
+        return value
 
 
 # Creating class for "POST" to add new product in products
@@ -43,16 +77,14 @@ class Product(BaseModel):
     brand: Annotated[
         str, Field(min_length=2, max_length=20, examples=["Asus", "Samsumg", "Apple"])
     ]
-    price: Annotated[float, Field(gt=0, strict=True, description="Base price in INR")]
+    price: Annotated[float, Field(gt=0, description="Base price in INR")]
     currency: Literal["INR"] = "INR"
     discount_percent: Annotated[
         int, Field(ge=0, le=90, description="Discount in percent (0-90)")
     ] = 0
     stock: Annotated[int, Field(ge=0, description="Available stock units(>=0)")]
     is_active: Annotated[bool, Field(description="Is product active")]
-    rating: Annotated[
-        float, Field(ge=0, le=5, strict=True, description="Product rating (0-5)")
-    ]
+    rating: Annotated[float, Field(ge=0, le=5, description="Product rating (0-5)")]
     tags: Annotated[
         Optional[List[str]],
         Field(
@@ -68,5 +100,36 @@ class Product(BaseModel):
     ]
 
     # dimensions_cm
-    # seller
+    seller: Seller
     created_at: datetime
+
+    # Using validators to check the format of specific fields
+    @field_validator("sku", mode="after")
+    @classmethod
+    def validate_sku_format(cls, value: str):
+        if "-" not in value:
+            raise ValueError("sku must contain a '-'")
+
+        last = value.split("-")[-1]
+        if not (len(last) == 3 and last.isdigit()):
+            raise ValueError("sku must end with a 3-digit sequence like -012")
+
+        return value
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_business_rules(cls, model: "Product"):
+        if model.stock == 0 and model.is_active is True:
+            raise ValueError("If stock is 0, then is_active must be false")
+
+        if model.discount_percent > 0 and model.rating == 0:
+            raise ValueError(
+                "Discounted price must have a few ratings. (ie rating != 0)"
+            )
+
+        return model
+
+    @computed_field
+    @property
+    def finalPrice(self) -> float:
+        return round(self.price * (1 - self.discount_percent / 100), 2)
