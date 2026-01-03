@@ -12,6 +12,13 @@ from uuid import UUID
 from datetime import datetime
 
 
+# A class for adding Dimensions Validation
+class Dimensions(BaseModel):
+    length: Annotated[float, Field(gt=0, strict=True, description="Length in cm")]
+    width: Annotated[float, Field(gt=0, description="Width in cm")]
+    height: Annotated[float, Field(gt=0, description="Width in cm")]
+
+
 # Creating a class for seller_details
 class Seller(BaseModel):
     id: UUID  # Generates a default unique UUID
@@ -31,7 +38,18 @@ class Seller(BaseModel):
     @field_validator("email", mode="after")
     @classmethod
     def validate_seller_email_domain(cls, value: EmailStr):
-        allowed_domains = ["mistore.in", "hpworld.in", "apple.in"]
+        allowed_domains = [
+            "mistore.in",
+            "hpworld.in",
+            "realmeofficial.in",
+            "samsungindia.in",
+            "lenovostore.in",
+            "applestoreindia.in",
+            "dellexclusive.in",
+            "sonycenter.in",
+            "oneplusstore.in",
+            "asusexlusive.in",
+        ]
         domain = str(value).split("@")[-1].lower()
         if domain not in allowed_domains:
             raise ValueError(f"Seller email domain not allowed: {domain}")
@@ -99,7 +117,7 @@ class Product(BaseModel):
         Field(min_length=1, description="Atleast 1 image URL", max_length=10),
     ]
 
-    # dimensions_cm
+    dimensions_cm: Dimensions
     seller: Seller
     created_at: datetime
 
@@ -133,3 +151,9 @@ class Product(BaseModel):
     @property
     def finalPrice(self) -> float:
         return round(self.price * (1 - self.discount_percent / 100), 2)
+
+    @computed_field
+    @property
+    def volume_cm3(self) -> float:
+        d = self.dimensions_cm
+        return round(d.length * d.width * d.height)

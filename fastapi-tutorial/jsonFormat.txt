@@ -49,3 +49,38 @@ Example 'json' format to test your input - with seller details
   "created_at": "2026-01-03T03:49:23.391000Z",
   "finalPrice": 650
 }
+
+Example 'json' format with dimensions
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "sku": "1234-abc-567-012",
+  "name": "Poco X6 Pro, MacBook M4, ASUS Vivobook 16x",
+  "description": "string",
+  "category": "Electronics",
+  "brand": "Asus",
+  "price": 1000,
+  "currency": "INR",
+  "discount_percent": 35,
+  "stock": 100,
+  "is_active": true,
+  "rating": 5,
+  "tags": [
+    "Electronics"
+  ],
+  "image_urls": [
+    "https://example.com/"
+  ],
+  "dimensions_cm": {
+    "length": 1,
+    "width": 1,
+    "height": 1
+  },
+  "seller": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "name": "Mi Store",
+    "email": "user@hpworld.in",
+    "website": "https://example.com/"
+  },
+  "created_at": "2026-01-03T03:49:23.391000Z",
+  "finalPrice": 650
+}
