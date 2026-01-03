@@ -29,3 +29,15 @@ def add_product(product: Dict) -> Dict:
     products.append(product)
     save_product(products)
     return product
+
+
+def remove_product(id: str) -> str:
+    products = get_all_products()
+    for idx, p in enumerate(products):
+        if p["id"] == str(id):
+            deleted = products.pop(idx)
+            save_product(products)
+            return {
+                "message": f"Product with id: {id} deleted successfully...",
+                "data": deleted,
+            }
