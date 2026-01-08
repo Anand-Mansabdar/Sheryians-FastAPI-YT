@@ -41,3 +41,23 @@ def remove_product(id: str) -> str:
                 "message": f"Product with id: {id} deleted successfully...",
                 "data": deleted,
             }
+
+
+def update_product(product_id: str, update_data: dict):
+    products = get_all_products()
+    for index, product in enumerate(products):
+
+        for key, value in update_data.items():
+            if value is None:
+                continue
+
+            if isinstance(value, dict) and isinstance(product.get(key), dict):
+                product[key].update(value)
+            else:
+                product[key] = value
+
+        products[index] = product
+        save_product(product)
+        return product
+
+    raise ValueError("Product not found")

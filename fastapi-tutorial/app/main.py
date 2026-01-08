@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException, Query, Path
-from service.products import (
+from app.service.products import (
     get_all_products,
     load_products,
     add_product,
     remove_product,
 )
-from schema.productSchema import Product
+from app.schema.productSchema import Product
 from uuid import uuid4, UUID
 from datetime import datetime
 
@@ -90,3 +90,4 @@ def delete_product(
         return data
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

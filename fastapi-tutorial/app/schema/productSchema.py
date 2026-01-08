@@ -21,7 +21,7 @@ class Dimensions(BaseModel):
 
 # Creating a class for seller_details
 class Seller(BaseModel):
-    id: UUID # Generates a default unique UUID
+    id: UUID  # Generates a default unique UUID
     name: Annotated[
         str,
         Field(
@@ -133,6 +133,84 @@ class Product(BaseModel):
             raise ValueError("sku must end with a 3-digit sequence like -012")
 
         return value
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_business_rules(cls, model: "Product"):
+        if model.stock == 0 and model.is_active is True:
+            raise ValueError("If stock is 0, then is_active must be false")
+
+        if model.discount_percent > 0 and model.rating == 0:
+            raise ValueError(
+                "Discounted price must have a few ratings. (ie rating != 0)"
+            )
+
+        return model
+
+    @computed_field
+    @property
+    def finalPrice(self) -> float:
+        return round(self.price * (1 - self.discount_percent / 100), 2)
+
+    @computed_field
+    @property
+    def volume_cm3(self) -> float:
+        d = self.dimensions_cm
+        return round(d.length * d.width * d.height)
+
+
+# Classes for updating details using Pydantic
+class DimensionsCMUpdate(BaseModel):
+    length: Optional[float] = Field(gt=0)
+    width: Optional[float] = Field(gt=0)
+    height: Optional[float] = Field(gt=0)
+
+
+class SellerUpdate(BaseModel):
+    name: Optional[str] = Field(min_length=2, max_length=60)
+    email: Optional[EmailStr]
+    website: Optional[AnyUrl]
+
+    @field_validator("email", mode="after")
+    @classmethod
+    def validate_seller_email_domain(cls, value: EmailStr):
+        allowed_domains = [
+            "mistore.in",
+            "hpworld.in",
+            "realmeofficial.in",
+            "samsungindia.in",
+            "lenovostore.in",
+            "applestoreindia.in",
+            "dellexclusive.in",
+            "sonycenter.in",
+            "oneplusstore.in",
+            "asusexlusive.in",
+        ]
+        domain = str(value).split("@")[-1].lower()
+        if domain not in allowed_domains:
+            raise ValueError(f"Seller email domain not allowed: {domain}")
+        return value
+
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(min_length=3, max_length=80)
+    description: Optional[str] = Field(max_length=200)
+    category: Optional[str]
+    brand: Optional[str]
+
+    price: Optional[float] = Field(gt=0)
+    currency: Optional[Literal["INR"]]
+
+    discount_percent: Optional[str] = Field(gt=0, le=90)
+    stock: Optional[int] = Field(gt=0)
+    is_active: Optional[bool]
+    rating: Optional[float] = Field(gt=0, le=5)
+
+    tags: Optional[List[str]] = Field(max_length=10)
+    image_urls = Optional[List[AnyUrl]]
+
+    dimensions_cm: Optional[DimensionsCMUpdate]
+    seller: Optional[SellerUpdate]
 
     @model_validator(mode="after")
     @classmethod
